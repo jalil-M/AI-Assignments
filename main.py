@@ -46,19 +46,22 @@ class Player(ABC):
 		
 		def valid_line(board, x, y, dx, dy):
 			"""
-			Check a given line to see if a move is valid.
+			Check a given line to see if a move is valid. Return the
+			squares that will change, if the move is valid, otherwise an empty
+			list.
 			"""
+			
 			if not 0 <= x + dx + dx < 8:
-				return False
+				return []
 			if not 0 <= y + dy + dy < 8:
-				return False
+				return []
 			
 			coords_1 = board.columns[x+dx] + board.rows[y+dy]
 			coords_2 = board.columns[x+dx+dx] + board.rows[y+dy+dy]
 			
 			if board[coords_1] != -self.color:
 				# If the neighbour square is not of the opposite color
-				return False
+				return []
 			
 			# We don't need to make this test as it will be tested in the next
 			# recursive iteration if needed
@@ -70,35 +73,44 @@ class Player(ABC):
 			elif board[coords_2] == self.color:
 				# If the following square is of the right colour, then the line
 				# is matching, and the move is valid
-				return True
+	
+				return [coords_1]
 			else:
 				# Otherwise, we need to test one step further
-				return valid_line(board, x+dx, y+dy, dx, dy)
+				
+				modified_squares = valid_line(board, x+dx, y+dy, dx, dy)
+				
+				if modified_squares:
+					# If the line is valid
+					return modified_squares + [coords_1]
+				else:
+					return []
 				
 		
-		valid_moves = []
+		valid_moves = {}
 		for i in range(len(cols)):
 			for j in range(len(rows)):
 				coords = cols[i] + rows[j]
+				modified_squares = []
 				
 				if board[coords] != 0:
 					# If there is already a piece on the square, the move is 
 					# not valid
 					continue
 				else:
-					nw = valid_line(board, i, j, -1, -1)
-					nn = valid_line(board, i, j,  0, -1)
-					ne = valid_line(board, i, j,  1, -1)
+					modified_squares += valid_line(board, i, j, -1, -1)
+					modified_squares += valid_line(board, i, j,  0, -1)
+					modified_squares += valid_line(board, i, j,  1, -1)
 					
-					ww = valid_line(board, i, j, -1,  0)
-					ee = valid_line(board, i, j,  1,  0)
+					modified_squares += valid_line(board, i, j, -1,  0)
+					modified_squares += valid_line(board, i, j,  1,  0)
 					
-					sw = valid_line(board, i, j, -1,  1)
-					ss = valid_line(board, i, j,  0,  1)
-					se = valid_line(board, i, j,  1,  1)
+					modified_squares += valid_line(board, i, j, -1,  1)
+					modified_squares += valid_line(board, i, j,  0,  1)
+					modified_squares += valid_line(board, i, j,  1,  1)
 				
-				if nw or nn or ne or ww or ee or sw or ss or se:
-					valid_moves.append(coords)
+				if modified_squares:
+					valid_moves.update({coords: modified_squares})
 					
 		return valid_moves
 		
@@ -110,22 +122,24 @@ class Human(Player):
 	def play(self, board):
 		possible_moves = self._possible_moves(board)
 		
+		
 		if not possible_moves:
 			# If the list is empty, then there is no possible move, and the
 			# game is finished
 			return None
 		
 		move = None
-		while move not in possible_moves:
+		while move not in possible_moves.keys():
 			print(board)
 			print('\n{}, what move do you want to play ?'.format(self.name))
 			move = input('> ')
 			print('\n')
 			
-			if move not in possible_moves:
+			if move not in possible_moves.keys():
 				print('#### WARNING - Invalid move ####\n')
 			
-		return move
+		# Return both the chosen move and the outcome
+		return (move, possible_moves[move])
 
 class Bot(Player):
 	
@@ -133,6 +147,9 @@ class Bot(Player):
 		super().__init__(False)
 	
 class RandomBot(Bot):
+	"""
+	Bot that chooses a random move among all legal moves
+	"""
 	
 	def __init__(self):
 		super().__init__()
@@ -144,8 +161,8 @@ class RandomBot(Bot):
 			return None
 		else:
 			print(board)
-			return random.choice(possible_moves)
-		
+			move = random.choice(list(possible_moves.keys()))
+			return (move, possible_moves[move])
 
 class Board:
 	
@@ -201,6 +218,9 @@ class Board:
 		return self.columns.index(str.upper(key[0])), self.rows.index(key[1])
 		
 	def __setitem__(self, key, value):
+		"""
+		Overload the [] operator to accept XY keys
+		"""
 		if not self._is_valid_key(key):
 			raise KeyError('The key is not valid')
 			
@@ -211,6 +231,9 @@ class Board:
 		self._board[x][y] = value
 
 	def __getitem__(self, key):
+		"""
+		Overload the [] operator to accept XY keys
+		"""
 		if not self._is_valid_key(key):
 			raise KeyError
 		
@@ -240,8 +263,7 @@ class Board:
 			s += ' '
 			s += ''.join(mapping(self[i+j]) for i in self.columns)
 			s += '\n'
-		s += '\n  '
-		return s + self.columns
+		return s + '\n  ' + self.columns + '\n'
 			
 
 class Game:
@@ -268,15 +290,21 @@ class Game:
 		
 	def play_turn(self):
 		if self.white_turn:
-			move = self.white.play(self.board)
+			output = self.white.play(self.board)
+			player = self.white.name
 			symbol = 1
 		else:
-			move = self.black.play(self.board)
+			output = self.black.play(self.board)
+			player = self.black.name
 			symbol = -1
 			
-		if move:
+		if output:
+			move, modified_squares = output
 			self.board[move] = symbol
-			self.update_board(move)
+			self.update_board(symbol, modified_squares)
+			
+			print('{} plays {}\n'.format(player, move))
+			print('########################################################\n')
 			
 			self.white_turn = not self.white_turn
 			
@@ -284,11 +312,12 @@ class Game:
 		else:
 			return False
 			
-	def update_board(self, move):
+	def update_board(self, symbol, modified_squares):
 		"""
-		Change pieces color for the given move
+		Change pieces color according to the given squares
 		"""
-		pass
+		for coord in modified_squares:
+			self.board[coord] = symbol
 	
 	def finish(self):
 		print('#### Game is finished ####\n')
