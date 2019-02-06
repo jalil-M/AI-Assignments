@@ -6,6 +6,7 @@ Created on Tue Feb  5 21:39:53 2019
 """
 
 from abc import ABC, abstractmethod
+from copy import deepcopy
 import time
 import random
 
@@ -32,11 +33,10 @@ class Player(ABC):
 		else:
 			value = 0
 			
-		self._color = value
-			
+		self._color = value			
 	
 	@abstractmethod
-	def play(self, board):
+	def play(self, board, opponent):
 		pass
 	
 	def _possible_moves(self, board):
@@ -113,13 +113,43 @@ class Player(ABC):
 					valid_moves.update({coords: modified_squares})
 					
 		return valid_moves
+	
+	def _simulate_move(self, board, move, modified_squares):
+		brd = deepcopy(board)
+		
+		brd[move] = self.color
+		for square in modified_squares:
+			brd[square] = self.color
+			
+		return brd
+		
+	def eval_board(self, board):
+		"""
+		Evaluation function of the board. A piece of the player's color
+		in a corner is 4 points, one along an edge is 2 points, and
+		elsewhere is 1 point. A piece of the opponent's color is worth 0.	
+		"""
+		s = 0
+		
+		for i in board.columns:
+			for j in board.rows:
+				if board[i+j] == self.color:
+				
+					if i in ['A', 'H'] or j in ['1', '8']:
+						if i + j in ['A1', 'A8', 'H1', 'H8']:
+							s += 4
+						else:
+							s += 2
+					else:
+						s += 1
+		return s
 		
 class Human(Player):
 	
 	def __init__(self):
 		super().__init__(True)
 		
-	def play(self, board):
+	def play(self, board, opponent):
 		possible_moves = self._possible_moves(board)
 		
 		
@@ -132,7 +162,7 @@ class Human(Player):
 		while move not in possible_moves.keys():
 			print(board)
 			print('\n{}, what move do you want to play ?'.format(self.name))
-			move = input('> ')
+			move = str.upper(input('> '))
 			print('\n')
 			
 			if move not in possible_moves.keys():
@@ -154,7 +184,7 @@ class RandomBot(Bot):
 	def __init__(self):
 		super().__init__()
 		
-	def play(self, board):
+	def play(self, board, opponent):
 		possible_moves = self._possible_moves(board)
 		
 		if not possible_moves:
@@ -163,6 +193,59 @@ class RandomBot(Bot):
 			print(board)
 			move = random.choice(list(possible_moves.keys()))
 			return (move, possible_moves[move])
+
+class MiniMaxBot(Bot):
+	"""
+	Bot that chooses moves according to the MiniMax algorithm.
+	"""
+	
+	def __init__(self, depth):
+		super().__init__()
+		self.max_depth = depth
+
+	def play(self, board, opponent):
+		"""
+		Use MiniMax algorithm to determine the move to play.
+		"""
+		
+		def simulate(board, is_opponent_turn, depth, opponent):
+			"""
+			Recursion function computing the score of a given move.
+			
+			The opponent boolean argument determines if the following turn is
+			played by the opponent or not.
+			"""
+			if is_opponent_turn:
+				player = opponent
+			else:
+				player = self
+				
+			possible_moves = player._possible_moves(board)
+			move_scores = {}
+			
+			for move, mod_sq in possible_moves.items():
+				# We compute the next board state
+				next_board = player._simulate_move(board, move, mod_sq)
+				
+				if depth == 1:					
+					# If the depth is 1, we use the evaluation function
+					move_scores.update(
+							{move: (player.eval_board(next_board), mod_sq)})
+				else:
+					# Otherwise, we iterate the recursion function again
+					_, (score, _) = simulate(next_board, not is_opponent_turn, depth - 1, opponent)
+					move_scores.update({move: (score, mod_sq)})
+				
+			# We take the move with the highest score if it is not the
+			# opponent's turn
+			if is_opponent_turn:
+				return max(move_scores.items(), key=lambda e: e[1][0])
+			else:
+				return min(move_scores.items(), key=lambda e: e[1][0])
+		
+		best_move, (_, mod_sq) = simulate(board, False, self.max_depth, opponent)
+		
+		return best_move, mod_sq		
 
 class Board:
 	
@@ -290,11 +373,11 @@ class Game:
 		
 	def play_turn(self):
 		if self.white_turn:
-			output = self.white.play(self.board)
+			output = self.white.play(self.board, self.black)
 			player = self.white.name
 			symbol = 1
 		else:
-			output = self.black.play(self.board)
+			output = self.black.play(self.board, self.white)
 			player = self.black.name
 			symbol = -1
 			
