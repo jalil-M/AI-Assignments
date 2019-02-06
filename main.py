@@ -7,7 +7,7 @@ Created on Tue Feb  5 21:39:53 2019
 
 from abc import ABC, abstractmethod
 import time
-
+import random
 
 class Player(ABC):
 	"""
@@ -17,7 +17,24 @@ class Player(ABC):
 	def __init__(self, human):
 		self.human = human
 		self._color = 0
+		self.name = None
 		
+	@property
+	def color(self):
+		return self._color
+	
+	@color.setter
+	def color(self, value):
+		if value == 1:
+			self.name = 'WHITE'
+		elif value == -1:
+			self.name = 'BLACK'
+		else:
+			value = 0
+			
+		self._color = value
+			
+	
 	@abstractmethod
 	def play(self, board):
 		pass
@@ -63,16 +80,22 @@ class Player(ABC):
 		for i in range(len(cols)):
 			for j in range(len(rows)):
 				coords = cols[i] + rows[j]
-				nw = valid_line(board, i, j, -1, -1)
-				nn = valid_line(board, i, j,  0, -1)
-				ne = valid_line(board, i, j,  1, -1)
 				
-				ww = valid_line(board, i, j, -1,  0)
-				ee = valid_line(board, i, j,  1,  0)
-				
-				sw = valid_line(board, i, j, -1,  1)
-				ss = valid_line(board, i, j,  0,  1)
-				se = valid_line(board, i, j,  1,  1)
+				if board[coords] != 0:
+					# If there is already a piece on the square, the move is 
+					# not valid
+					continue
+				else:
+					nw = valid_line(board, i, j, -1, -1)
+					nn = valid_line(board, i, j,  0, -1)
+					ne = valid_line(board, i, j,  1, -1)
+					
+					ww = valid_line(board, i, j, -1,  0)
+					ee = valid_line(board, i, j,  1,  0)
+					
+					sw = valid_line(board, i, j, -1,  1)
+					ss = valid_line(board, i, j,  0,  1)
+					se = valid_line(board, i, j,  1,  1)
 				
 				if nw or nn or ne or ww or ee or sw or ss or se:
 					valid_moves.append(coords)
@@ -92,26 +115,37 @@ class Human(Player):
 			# game is finished
 			return None
 		
-		ok = False
-		while not ok:
+		move = None
+		while move not in possible_moves:
 			print(board)
-			print('\nWhat move do you want to play ?')
+			print('\n{}, what move do you want to play ?'.format(self.name))
 			move = input('> ')
+			print('\n')
 			
-			try:
-				if possible_moves[move] == 1:
-					return move
-			except KeyError:
-				print('WARNING - Invalid move\n')
-				continue
-		
+			if move not in possible_moves:
+				print('#### WARNING - Invalid move ####\n')
+			
+		return move
+
 class Bot(Player):
 	
 	def __init__(self):
 		super().__init__(False)
+	
+class RandomBot(Bot):
+	
+	def __init__(self):
+		super().__init__()
 		
 	def play(self, board):
-		pass
+		possible_moves = self._possible_moves(board)
+		
+		if not possible_moves:
+			return None
+		else:
+			print(board)
+			return random.choice(possible_moves)
+		
 
 class Board:
 	
@@ -199,7 +233,8 @@ class Board:
 				# Empty
 				return '-'
 		
-		s = ''
+		s = 'BLACK - X\n'
+		s += 'WHITE - O\n\n'
 		for j in self.rows:
 			s += j
 			s += ' '
@@ -225,6 +260,12 @@ class Game:
 		
 		self.white_turn = False # True is for WHITE's turn, False is for BLACK's
 		
+	def start(self):
+		while self.play_turn():
+			continue
+		
+		self.finish()
+		
 	def play_turn(self):
 		if self.white_turn:
 			move = self.white.play(self.board)
@@ -234,15 +275,41 @@ class Game:
 			symbol = -1
 			
 		if move:
-			board[move] = symbol
+			self.board[move] = symbol
+			self.update_board(move)
+			
+			self.white_turn = not self.white_turn
+			
+			return True
 		else:
-			self.finish()
+			return False
 			
+	def update_board(self, move):
+		"""
+		Change pieces color for the given move
+		"""
+		pass
+	
 	def finish(self):
-		print('Game is finished')
+		print('#### Game is finished ####\n')
 		
-		self.white_turn = not self.white_turn
-			
+		print(self.board)
+		
+		white_count = sum(sum(self.board[i+j] == 1 for i in self.board.columns)
+					      for j in self.board.rows)
+		black_count = sum(sum(self.board[i+j] == -1 for i in self.board.columns)
+						  for j in self.board.rows)
+		
+		print('\n')
+		print('WHITE {} - {} BLACK'.format(white_count, black_count))
+		print('\n')
+		
+		if white_count == black_count:
+			print('This is a DRAW\n')
+		elif white_count > black_count:
+			print('WHITE wins')
+		else:
+			print('BLACK wins')
 		
 			
 			
