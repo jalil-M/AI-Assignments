@@ -7,6 +7,7 @@ Created on Tue Feb  5 21:39:53 2019
 
 from abc import ABC, abstractmethod
 from copy import deepcopy
+from math import inf
 import time
 import random
 
@@ -199,9 +200,10 @@ class MiniMaxBot(Bot):
 	Bot that chooses moves according to the MiniMax algorithm.
 	"""
 	
-	def __init__(self, depth):
+	def __init__(self, depth, time_out=0):
 		super().__init__()
 		self.max_depth = depth
+		self.time_out = time_out
 
 	def play(self, board, opponent):
 		"""
@@ -222,6 +224,12 @@ class MiniMaxBot(Bot):
 				
 			possible_moves = player._possible_moves(board)
 			move_scores = {}
+			
+			if not possible_moves:
+				# The score is infinite, with the sign corresponding to the
+				# winning color
+				score = (board.count(self.color) - board.count(-self.color)) * inf
+				return None, (score, None)
 			
 			for move, mod_sq in possible_moves.items():
 				# We compute the next board state
@@ -245,7 +253,7 @@ class MiniMaxBot(Bot):
 		
 		best_move, (_, mod_sq) = simulate(board, False, self.max_depth, opponent)
 		
-		return best_move, mod_sq		
+		return best_move, mod_sq
 
 class Board:
 	
@@ -347,18 +355,29 @@ class Board:
 			s += ''.join(mapping(self[i+j]) for i in self.columns)
 			s += '\n'
 		return s + '\n  ' + self.columns + '\n'
+	
+	def count(self, color):
+		if color == 1:
+			return self.white_count()
+		else:
+			return self.black_count()
 			
+	def white_count(self):
+		return sum(sum(self[i+j] == 1 for i in self.columns)
+				       for j in self.rows)
+		
+	def black_count(self):
+		return sum(sum(self[i+j] == -1 for i in self.columns)
+				       for j in self.rows)
 
 class Game:
 	
-	def __init__(self, player1, player2, max_time=30):
+	def __init__(self, player1, player2):
 		self.white = player1
 		self.white.color = 1
 		
 		self.black = player2
 		self.black.color = -1
-		
-		self.max_time = 30
 	
 		self.board = Board()
 		self.board.init_position()
@@ -380,9 +399,11 @@ class Game:
 			output = self.black.play(self.board, self.white)
 			player = self.black.name
 			symbol = -1
-			
-		if output:
-			move, modified_squares = output
+		
+		
+		move, modified_squares = output
+		
+		if move:
 			self.board[move] = symbol
 			self.update_board(symbol, modified_squares)
 			
@@ -407,10 +428,8 @@ class Game:
 		
 		print(self.board)
 		
-		white_count = sum(sum(self.board[i+j] == 1 for i in self.board.columns)
-					      for j in self.board.rows)
-		black_count = sum(sum(self.board[i+j] == -1 for i in self.board.columns)
-						  for j in self.board.rows)
+		white_count = self.board.white_count()
+		black_count = self.board.black_count()
 		
 		print('\n')
 		print('WHITE {} - {} BLACK'.format(white_count, black_count))
@@ -424,5 +443,9 @@ class Game:
 			print('BLACK wins')
 		
 			
-			
+p1 = MiniMaxBot(4)
+p2 = MiniMaxBot(1)
+
+g = Game(p1, p2)
+g.start()
 			
