@@ -151,6 +151,7 @@ class Human(Player):
 		super().__init__(True)
 		
 	def play(self, board, opponent):
+        
 		possible_moves = self._possible_moves(board)
 		
 		
@@ -391,15 +392,25 @@ class Game:
 		self.finish()
 		
 	def play_turn(self):
+        mins = 0
 		if self.white_turn:
-			output = self.white.play(self.board, self.black)
-			player = self.white.name
-			symbol = 1
+            while mins != 2:
+                time.sleep(60)
+                mins += 1
+                output = self.white.play(self.board, self.black)
+                player = self.white.name
+                symbol = 1
+            if mins>=2:
+                print (" Game stopped : too long ")
 		else:
-			output = self.black.play(self.board, self.white)
-			player = self.black.name
-			symbol = -1
-		
+            while mins != 2:
+                time.sleep(60)
+                mins += 1
+                output = self.black.play(self.board, self.white)
+                player = self.black.name
+                symbol = -1
+            if mins>=2:
+                print (" Game stopped : too long ")
 		
 		move, modified_squares = output
 		
@@ -437,10 +448,13 @@ class Game:
 		
 		if white_count == black_count:
 			print('This is a DRAW\n')
+            break
 		elif white_count > black_count:
 			print('WHITE wins')
+            break
 		else:
 			print('BLACK wins')
+            break
 		
 			
 p1 = MiniMaxBot(4)
