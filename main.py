@@ -229,7 +229,9 @@ class MiniMaxBot(Bot):
 				# The score is infinite, with the sign corresponding to the
 				# winning color
 				score = (board.count(self.color) - board.count(-self.color)) * inf
-				return None, (score, None)
+				if is_opponent_turn:
+					score *= -1
+				return None, score, None
 			
 			for move, mod_sq in possible_moves.items():
 				# We compute the next board state
@@ -241,17 +243,26 @@ class MiniMaxBot(Bot):
 							{move: (player.eval_board(next_board), mod_sq)})
 				else:
 					# Otherwise, we iterate the recursion function again
-					_, (score, _) = simulate(next_board, not is_opponent_turn, depth - 1, opponent)
+					_, score, _ = simulate(next_board, not is_opponent_turn, depth - 1, opponent)
 					move_scores.update({move: (score, mod_sq)})
 				
-			# We take the move with the highest score if it is not the
-			# opponent's turn
+			# We take the move with the highest score if it is the
+			# opponent's turn, otherwise the lowest
 			if is_opponent_turn:
-				return max(move_scores.items(), key=lambda e: e[1][0])
+				# If several moves have the same score, we choose one
+				# randomly between them
+				max_score = max(move_scores.values(), key=lambda e: e[0])[0]
+				max_values = [(mv, sc, sq) for mv, (sc, sq) in move_scores.items()
+							  if sc == max_score]
+				return random.choice(max_values)
+			
 			else:
-				return min(move_scores.items(), key=lambda e: e[1][0])
+				min_score = min(move_scores.values(), key=lambda e: e[0])[0]
+				min_values = [(mv, sc, sq) for mv, (sc, sq) in move_scores.items()
+							  if sc == min_score]
+				return random.choice(min_values)
 		
-		best_move, (_, mod_sq) = simulate(board, False, self.max_depth, opponent)
+		best_move, _, mod_sq = simulate(board, False, self.max_depth, opponent)
 		
 		return best_move, mod_sq
 
