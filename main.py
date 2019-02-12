@@ -224,10 +224,8 @@ class MiniMaxBot(Bot):
 			
 			if is_opponent_turn:
 				player = opponent
-				v = -inf
 			else:
 				player = self
-				v = inf
 				
 			possible_moves = player._possible_moves(board)
 			move_scores = {}
