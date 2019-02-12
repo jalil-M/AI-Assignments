@@ -7,7 +7,7 @@ Created on Tue Feb  5 21:39:53 2019
 
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from math import inf
+from math import inf, isnan
 import time
 import random
 
@@ -208,20 +208,26 @@ class MiniMaxBot(Bot):
 
 	def play(self, board, opponent):
 		"""
-		Use MiniMax algorithm to determine the move to play.
+		Use MiniMax algorithm to determine the move to play, with alpha-beta
+		pruning.
 		"""
 		
-		def simulate(board, is_opponent_turn, depth, opponent):
+		start_time = time.time()
+		
+		def simulate(board, is_opponent_turn, depth, opponent, start_time, a, b):
 			"""
 			Recursion function computing the score of a given move.
 			
 			The opponent boolean argument determines if the following turn is
 			played by the opponent or not.
 			"""
+			
 			if is_opponent_turn:
 				player = opponent
+				v = -inf
 			else:
 				player = self
+				v = inf
 				
 			possible_moves = player._possible_moves(board)
 			move_scores = {}
@@ -230,6 +236,8 @@ class MiniMaxBot(Bot):
 				# The score is infinite, with the sign corresponding to the
 				# winning color
 				score = (board.count(player.color) - board.count(-player.color)) * inf
+				if isnan(score):
+					score = 0
 				return None, score, None
 			
 			for move, mod_sq in possible_moves.items():
@@ -242,8 +250,23 @@ class MiniMaxBot(Bot):
 							{move: (player.eval_board(next_board), mod_sq)})
 				else:
 					# Otherwise, we iterate the recursion function again
-					_, score, _ = simulate(next_board, not is_opponent_turn, depth - 1, opponent)
+					_, score, _ = simulate(next_board, not is_opponent_turn, depth - 1, opponent, start_time, a, b)
 					move_scores.update({move: (score, mod_sq)})
+					
+					# Alpha-beta pruning
+					if is_opponent_turn:
+						a = max(a, score)
+						if b <= a:
+							break
+					else:
+						b = min(b, score)
+						if b <= a:
+							break
+					
+				if time.time() - start_time > self.time_out and self.time_out:
+					# If there is a non-zero timeout, that has been reached,
+					# the search is stopped
+					break
 				
 			# We take the move with the highest score if it is the
 			# opponent's turn, otherwise the lowest
@@ -261,7 +284,7 @@ class MiniMaxBot(Bot):
 							  if sc == min_score]
 				return random.choice(min_values)
 		
-		best_move, _, mod_sq = simulate(board, False, self.max_depth, opponent)
+		best_move, _, mod_sq = simulate(board, False, self.max_depth, opponent, start_time, -inf, inf)
 		
 		return best_move, mod_sq
 
