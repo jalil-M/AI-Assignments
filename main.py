@@ -229,9 +229,7 @@ class MiniMaxBot(Bot):
 			if not possible_moves:
 				# The score is infinite, with the sign corresponding to the
 				# winning color
-				score = (board.count(self.color) - board.count(-self.color)) * inf
-				if is_opponent_turn:
-					score *= -1
+				score = (board.count(player.color) - board.count(-player.color)) * inf
 				return None, score, None
 			
 			for move, mod_sq in possible_moves.items():
