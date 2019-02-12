@@ -7,7 +7,7 @@ Created on Tue Feb  5 21:39:53 2019
 
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from math import inf
+from math import inf, isnan
 import time
 import random
 
@@ -218,6 +218,9 @@ class MiniMaxBot(Bot):
 			The opponent boolean argument determines if the following turn is
 			played by the opponent or not.
 			"""
+			
+			d1 = time.time()
+			
 			if is_opponent_turn:
 				player = opponent
 			else:
@@ -229,15 +232,15 @@ class MiniMaxBot(Bot):
 			if not possible_moves:
 				# The score is infinite, with the sign corresponding to the
 				# winning color
-				score = (board.count(self.color) - board.count(-self.color)) * inf
-				if is_opponent_turn:
-					score *= -1
+				score = (board.count(player.color) - board.count(-player.color)) * inf
+				if isnan(score):
+					score = 0
 				return None, score, None
 			
 			for move, mod_sq in possible_moves.items():
 				# We compute the next board state
 				next_board = player._simulate_move(board, move, mod_sq)
-				
+                
 				if depth == 1:					
 					# If the depth is 1, we use the evaluation function
 					move_scores.update(
@@ -246,6 +249,13 @@ class MiniMaxBot(Bot):
 					# Otherwise, we iterate the recursion function again
 					_, score, _ = simulate(next_board, not is_opponent_turn, depth - 1, opponent)
 					move_scores.update({move: (score, mod_sq)})
+				
+				d2 = time.time()
+				diff = d2-d1
+				
+				if diff > self.time_out:
+					print("time is up")
+					break
 				
 			# We take the move with the highest score if it is the
 			# opponent's turn, otherwise the lowest
@@ -454,7 +464,7 @@ class Game:
 			print('BLACK wins')
 		
 			
-p1 = MiniMaxBot(4)
+p1 = MiniMaxBot(12,3)
 p2 = MiniMaxBot(1)
 
 g = Game(p1, p2)
