@@ -208,18 +208,19 @@ class MiniMaxBot(Bot):
 
 	def play(self, board, opponent):
 		"""
-		Use MiniMax algorithm to determine the move to play.
+		Use MiniMax algorithm to determine the move to play, with alpha-beta
+		pruning.
 		"""
 		
-		def simulate(board, is_opponent_turn, depth, opponent):
+		start_time = time.time()
+		
+		def simulate(board, is_opponent_turn, depth, opponent, start_time, a, b):
 			"""
 			Recursion function computing the score of a given move.
 			
 			The opponent boolean argument determines if the following turn is
 			played by the opponent or not.
 			"""
-			
-			d1 = time.time()
 			
 			if is_opponent_turn:
 				player = opponent
@@ -240,21 +241,29 @@ class MiniMaxBot(Bot):
 			for move, mod_sq in possible_moves.items():
 				# We compute the next board state
 				next_board = player._simulate_move(board, move, mod_sq)
-                
+				
 				if depth == 1:					
 					# If the depth is 1, we use the evaluation function
 					move_scores.update(
 							{move: (player.eval_board(next_board), mod_sq)})
 				else:
 					# Otherwise, we iterate the recursion function again
-					_, score, _ = simulate(next_board, not is_opponent_turn, depth - 1, opponent)
+					_, score, _ = simulate(next_board, not is_opponent_turn, depth - 1, opponent, start_time, a, b)
 					move_scores.update({move: (score, mod_sq)})
-				
-				d2 = time.time()
-				diff = d2-d1
-				
-				if diff > self.time_out:
-					print("time is up")
+					
+					# Alpha-beta pruning
+					if is_opponent_turn:
+						a = max(a, score)
+						if b <= a:
+							break
+					else:
+						b = min(b, score)
+						if b <= a:
+							break
+					
+				if time.time() - start_time > self.time_out and self.time_out:
+					# If there is a non-zero timeout, that has been reached,
+					# the search is stopped
 					break
 				
 			# We take the move with the highest score if it is the
@@ -273,7 +282,7 @@ class MiniMaxBot(Bot):
 							  if sc == min_score]
 				return random.choice(min_values)
 		
-		best_move, _, mod_sq = simulate(board, False, self.max_depth, opponent)
+		best_move, _, mod_sq = simulate(board, False, self.max_depth, opponent, start_time, -inf, inf)
 		
 		return best_move, mod_sq
 
@@ -464,7 +473,7 @@ class Game:
 			print('BLACK wins')
 		
 			
-p1 = MiniMaxBot(12,3)
+p1 = MiniMaxBot(4)
 p2 = MiniMaxBot(1)
 
 g = Game(p1, p2)
