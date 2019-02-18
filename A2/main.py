@@ -5,8 +5,12 @@ Created on Sun Feb 17 11:39:43 2019
 @author: Jalil M
 """
 
-import time
+from time import sleep
 import argparse
+
+from grid import Grid
+from hmm import HMM
+from robot import Robot, Sensor
 
 def start_robot(size):
     """
@@ -22,13 +26,13 @@ def start_robot(size):
     while True:
         grid.move_robot()
         moves += 1
-        print "\nRobot position: ", grid.robot_location
+        print ("\nRobot position: ", grid.robot_location)
         guessed, probability = robot.guess_move()
         if guessed == grid.robot_location:
             guessed_r += 1
         man_distance = abs(guessed[0] - grid.robot_location[0]) + abs(guessed[1] - grid.robot_location[1])
-        print "Manhattan distance: ", man_distance
-        print "Robot has an accuracy of:", float(guessed_r) / moves, "during this time."
+        print ("Manhattan distance: ", man_distance)
+        print ("Robot has an accuracy of:", float(guessed_r) / moves, "during this time.")
         sleep(1)
 
 if __name__ == '__main__':
