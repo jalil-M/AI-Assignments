@@ -33,10 +33,10 @@ class Robot:
 
     def guess_move(self):
         sensed = self.sensor.sense_location()
-        print "Sensor thinks: ", sensed
+        print("Sensor thinks: ", sensed)
         self.hmm.forward_step(sensed)
         guessed, probability = self.hmm.most_probable()
-        print "Robot predicts it is in: ", guessed, " with probability: ", probability
+        print("Robot predicts it is in: ", guessed, " with probability: ", probability)
         return guessed, probability
 
 

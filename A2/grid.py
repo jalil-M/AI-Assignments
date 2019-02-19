@@ -21,7 +21,7 @@ class Grid:
 
     def robot_adj_location(self):
         x, y = self.robot_location
-		p_s = [(x-1,y-1),(x-1,y),(x-1,y+1),(x,y-1),(x,y),(x,y+1),(x+1,y-1),(x+1,y),(x+1,y+1)]
+        p_s = [(x-1,y-1),(x-1,y),(x-1,y+1),(x,y-1),(x,y),(x,y+1),(x+1,y-1),(x+1,y),(x+1,y+1)]
         adj = p_s[random.randint(0, 7)]
 
         # wall check

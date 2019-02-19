@@ -7,7 +7,7 @@ Created on Mon Feb 18 18:15:54 2019
 
 import numpy as np
 
-from hmm_localisation.robot import Direction
+from robot import Direction
 
 
 class HMM:
@@ -34,7 +34,7 @@ class HMM:
             heading = i % 4
             prev_states = self.probable_trans((x, y, heading))
             for (xcoord, ycoord, direction), probability in prev_states:
-                result[i, xcoord * height * 4 + ycoord * 4 + direction] = probability
+                result[i, int(xcoord * height * 4 + ycoord * 4 + direction)] = probability
         return result
 
     def probable_trans(self, state):
