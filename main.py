@@ -242,7 +242,7 @@ class MiniMaxBot(Bot):
 				# We compute the next board state
 				next_board = player._simulate_move(board, move, mod_sq)
 				
-				if depth == 1:					
+				if depth == 1:
 					# If the depth is 1, we use the evaluation function
 					move_scores.update(
 							{move: (player.eval_board(next_board), mod_sq)})
@@ -473,8 +473,8 @@ class Game:
 			print('BLACK wins')
 		
 			
-p1 = MiniMaxBot(4)
-p2 = MiniMaxBot(1)
+p1 = MiniMaxBot(6, 8) # Depth of 6, timeout of 8 seconds
+p2 = Human()
 
 g = Game(p1, p2)
 g.start()
