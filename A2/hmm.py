@@ -6,6 +6,7 @@ Created on Mon Feb 18 18:15:54 2019
 """
 
 import numpy as np
+import sys
 
 from robot import Direction
 
@@ -149,9 +150,10 @@ class HMM:
         f = self.f_matrix
         o = self.create_sensor_matrix(coord)
         t = self.matrixT
-
+        
         f = t.dot(f).dot(o)
-        print("WE PRINT THE VALUE : ", np.sum(f))
+        if np.sum(f) == 0:
+            sys.exit(0)
         f /= np.sum(f)
 
         self.f_matrix = f
