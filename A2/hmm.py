@@ -29,8 +29,8 @@ class HMM:
         height = self.height
         result = np.array(np.zeros(shape=(width * height * 4, width * height * 4)))
 
-        for x in range(height):
-            for y in range(width):
+        for x in range(width):
+            for y in range(height):
                 for direction in Direction.DIRS:
                     # State at time t-1
                     i = x * height * 4 + y * 4 + direction
@@ -47,42 +47,33 @@ class HMM:
     def possible_transitions(self, x, y, direction):
         height = self.height
         width = self.width
-        neighbors = [(x, y - 1), (x - 1, y), (x, y + 1), (x + 1, y)]
+        neighbors = [(x, y + 1), (x + 1, y), (x, y - 1), (x - 1, y)]
         transitions = []
         
-        for x_coord, y_coord in neighbors:
-            if not 0 <= x_coord < height or not 0 <= y_coord < width:
+        can_go_forward = True
+        
+        x_coord, y_coord = neighbors[direction]
+        if not 0 <= y_coord < height or not 0 <= x_coord < width:
+            can_go_forward = False
+        
+        for d, (x_coord, y_coord) in enumerate(neighbors):
+            if not 0 <= y_coord < height or not 0 <= x_coord < width:
                 # The neighbor is out of the grid
-                pass
+                continue
             else:
-                for poss_direction in Direction.DIRS:
-                    if x_coord == 0 and poss_direction == 0: # NORTH
-                        continue
-                    if x_coord == height - 1 and poss_direction == 2: # SOUTH
-                        continue
-                    if y_coord == 0 and poss_direction == 3: # WEST
-                        continue
-                    if y_coord == width - 1 and poss_direction == 1: # EAST
-                        continue
-                    
-                    if poss_direction == direction:
-                        prob = 0.7
+                if d == direction:
+                    transitions.append(((x_coord, y_coord, d), 0.7))
+                else:
+                    if can_go_forward:
+                        p = 0.3
                     else:
-                        wall_directions = sum([x_coord == 0,
-                                               x_coord == height - 1,
-                                               y_coord == 0,
-                                               y_coord == width - 1])
-                        if (x_coord == 0 and direction == 0 or
-                           x_coord == height - 1 and direction == 2 or
-                           y_coord == 0 and direction == 3 or
-                           y_coord == width - 1 and direction == 1):
-                            # If the robot if facing a wall in this direction
-                            prob = 1.0 / (3 - wall_directions)
-                        else:
-                            prob = 0.3 / (3 - wall_directions)
-                        
-                    trans = (x_coord, y_coord, poss_direction)
-                    transitions.append((trans, prob))
+                        p = 1.0
+                    transitions.append(((x_coord, y_coord, d), p))
+                    
+        if can_go_forward:
+            transitions = [(pos, p / (len(transitions) - 1)) if p != 0.7 else (pos, p) for pos, p in transitions]
+        else:
+            transitions = [(pos, p / len(transitions)) for pos, p in transitions]
                     
         return transitions
 
@@ -164,6 +155,6 @@ class HMM:
     def most_probable(self):
         f = self.f_matrix
         max_prob_idx = np.argmax(f)
-        x = max_prob_idx // (self.height * 4)
+        x = (max_prob_idx // 4) // self.height
         y = (max_prob_idx // 4) % self.height
         return (x, y), f[max_prob_idx]
