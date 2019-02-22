@@ -14,8 +14,7 @@ from robot import Robot, Sensor
 
 def start_robot(size):
     """
-    Sets up the world and robot and enters endless loop of guessing.
-    :param size:
+    Creating the World and robot and loops over probabilities.
     """
     grid = Grid(size.width, size.height)
     sensor = Sensor(grid)
@@ -37,10 +36,9 @@ def start_robot(size):
 
 if __name__ == '__main__':
     """
-    The main function called when main.py is run from the command line.
-    Example usage:
+    USAGE :
     > python main.py --width 10 --height 10
-    First argument defines the width of the grid, second, the height.
+    The arguments define respectively the width and height of the grid.
     """
     parser = argparse.ArgumentParser()
     parser.add_argument("--width", type=int, required=True)

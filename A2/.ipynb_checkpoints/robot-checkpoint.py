@@ -10,9 +10,9 @@ import random
 class Sensor:
     def __init__(self, grid):
         self.grid = grid
-    p = 0.1
-    p_s = 0.05
-    p_s2 = 0.025
+        self.p = 0.1
+        self.p_s = 0.05
+        self.p_s2 = 0.025
 
     def sense_location(self):
         rand = random.random()

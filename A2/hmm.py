@@ -91,15 +91,14 @@ class HMM:
         o = np.array(np.zeros(shape=(width * height * 4, width * height * 4)))
         x, y = sensed_coord
 
-        # Assign probability of 0.1 for sensed_coord
-        #CHANGED THE MATRIX
+        # prob of 0.1
         index = x * 4 * height + y * 4
         for i in range(4):
             o[index + i, index + i] = 0.1
 
-        # Assign probability of 0.05 for directly adjacent squares
+        # prob 0.05
         self.assign_adj(o, self.possible_adj(x, y), 0.05)
-        # Assign probability of 0.025 for directly adjacent squares
+        # prob 0.025
         self.assign_adj(o, self.possible_adj2(x, y), 0.025)
 
         return o

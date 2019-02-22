@@ -55,17 +55,15 @@ class Grid:
 
     def move_robot(self):
 
-        # 30% Chance to change direction.
+        # prob 0.3 to change direction.
         rand = random.random()
         if rand <= 0.3:
             self.robot_dir = Direction.random(self.robot_dir)
-        # Changes direction until robot doesn't face wall.
         while self.robot_faces_wall():
             self.robot_dir = Direction.random(self.robot_dir)
 
         x, y = self.robot_location
 
-        # Moves forward in robot's direction.
         # NORTH, EAST, SOUTH, WEST
         next_locations = [(x, y + 1), (x + 1, y), (x, y - 1), (x - 1, y)]
         self.robot_location = next_locations[self.robot_dir]
