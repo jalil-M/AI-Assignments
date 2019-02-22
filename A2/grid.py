@@ -22,7 +22,7 @@ class Grid:
     def robot_adj_location(self):
         x, y = self.robot_location
         p_s = [(x-1,y-1),(x-1,y),(x-1,y+1),(x,y-1),(x,y),(x,y+1),(x+1,y-1),(x+1,y),(x+1,y+1)]
-        adj = p_s[random.randint(0, 7)]
+        adj = random.choice(p_s)
 
         # wall check
         if adj[0] >= self.width or adj[1] >= self.height or adj[0] < 0 or adj[1] < 0:
@@ -31,10 +31,10 @@ class Grid:
             return adj
 
     def robot_adj2_location(self):
-		
+        
         x, y = self.robot_location
         ps_2 = [(x-2, y-2), (x-2, y-1), (x-2, y), (x-2, y+1), (x-2, y+2), (x-1, y-2),(x-1, y+2), (x, y-2), (x, y+2), (x+1, y-2), (x+1, y+2), (x+2, y-2), (x+2, y-1),(x+2, y), (x+2, y+1), (x+2, y+2)]
-        adj = ps_2[random.randint(0, 15)]
+        adj = random.choice(ps_2)
 
         # wall check
         if adj[0] >= self.width or adj[1] >= self.height or adj[0] < 0 or adj[1] < 0:
