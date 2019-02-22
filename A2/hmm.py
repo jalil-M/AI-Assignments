@@ -52,7 +52,7 @@ class HMM:
         
         for x_coord, y_coord in neighbors:
             if not 0 <= x_coord < height or not 0 <= y_coord < width:
-                # The neighbor is out of the grid
+                #out of the grid
                 pass
             else:
                 for poss_direction in Direction.DIRS:
@@ -76,7 +76,7 @@ class HMM:
                            x_coord == height - 1 and direction == 2 or
                            y_coord == 0 and direction == 3 or
                            y_coord == width - 1 and direction == 1):
-                            # If the robot if facing a wall in this direction
+                            # robot faces a wall
                             prob = 1.0 / (3 - wall_directions)
                         else:
                             prob = 0.3 / (3 - wall_directions)
@@ -100,15 +100,14 @@ class HMM:
         o = np.array(np.zeros(shape=(width * height * 4, width * height * 4)))
         x, y = sensed_coord
 
-        # Assign probability of 0.1 for sensed_coord
-        #CHANGED THE MATRIX
+        # prob of 0.1
         index = x * 4 * height + y * 4
         for i in range(4):
             o[index + i, index + i] = 0.1
 
-        # Assign probability of 0.05 for directly adjacent squares
+        # prob 0.05
         self.assign_adj(o, self.possible_adj(x, y), 0.05)
-        # Assign probability of 0.025 for directly adjacent squares
+        # prob 0.025
         self.assign_adj(o, self.possible_adj2(x, y), 0.025)
 
         return o
