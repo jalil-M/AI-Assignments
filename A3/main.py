@@ -7,7 +7,8 @@ Created on Mon Feb 25 23:39:31 2019
 
 import random
 import matplotlib.pyplot as plt
-from numpy import dot
+from math import exp
+import numpy as np
 
 
 class LIBSVMFile:
@@ -81,6 +82,7 @@ class LinearClassifier:
                                     # examples passes below, the training stops
         
         self.weights = None
+        self.norm_coefs = None
         self.data = None
         
         
@@ -88,10 +90,10 @@ class LinearClassifier:
         self.data = data
         
         # Labels list
-        Y = self.data['labels']
+        Y = np.array(self.data['labels'])
         
         # Values list, with extra 1 to account for the intercept term
-        X = [[1.0] + values for values in self.data['values']]
+        X = self.normalize(np.array([[1.0] + values for values in self.data['values']]))
         
         # Number of examples
         n = len(Y)
@@ -107,25 +109,36 @@ class LinearClassifier:
             y, x = Y[r], X[r]
             
             for i, w in enumerate(self.weights):
-                w += self.learning_rate(step) * (y - self._classifier(x)) * x[i]
+                h = self._classifier(x)
+                w += self.learning_rate(step) * (y - h) * h * (1 - h) * x[i]
+                print(self.learning_rate(step) * (y - h) * h * (1 - h) * x[i])
                 self.weights[i] = w
-            
-            # Number of missclassified examples
-            
+                
+            # Number of misclassified examples
             m = sum([abs(true_y - pred_y) for true_y, pred_y in zip(Y, self.predict(X))])
             step += 1
             
     def predict(self, X):
         return [self._classifier(x) for x in X]
+    
+    def normalize(self, values):
+        v = values.transpose()
+        norm_coefs = []
+        
+        for i, row in enumerate(v):
+            m = max(row)
+            v[i] /= m
+            norm_coefs.append(m)
+            
+        self.norm_coefs = norm_coefs
+        
+        return v.transpose()
                 
     def _classifier(self, x):
-        return self._threshold(dot(self.weights, x))
+        return self._threshold(np.dot(self.weights, x))
         
     def _threshold(self, a):
-        if a > 0:
-            return 1
-        else:
-            return 0
+        return 1 / (1 + exp(-a))
         
 if __name__ == '__main__':
     data = LIBSVMFile('data.libsvm').load_data().data
@@ -133,12 +146,16 @@ if __name__ == '__main__':
     X2 = [e[1] for e in data['values']]
     Y = data['labels']
     
-    clf = LinearClassifier(alpha=0.0000001)
+    def f(t):
+        return 0.01
+    
+    clf = LinearClassifier(alpha=f, max_steps=1000, err_crit=0)
     clf.fit(data)
     w = clf.weights
+    nc = clf.norm_coefs
     
     Xg = range(10000, 80000)
-    Yg = [(-w[0] - w[1]*x) / w[2] for x in Xg]
+    Yg = [-nc[2] * (w[0] + w[1] / nc[1] * x) / w[2] for x in Xg]
     
     plt.scatter(X1, X2, c=Y)
     plt.plot(Xg, Yg)
