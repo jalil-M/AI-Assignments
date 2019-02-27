@@ -108,8 +108,8 @@ class HMM:
         height = self.height
         o = np.array(np.zeros(shape=(width * height * 4, width * height * 4)))
         for i in range(width * height * 4):
-            x = i // (height * 4)
-            y = i // 4
+            x = (i // 4) // height
+            y = (i // 4) % self.height
 
             num_adj = 8 - len(self.possible_adj(x, y))
             num_adj2 = 16 - len(self.possible_adj2(x, y))
