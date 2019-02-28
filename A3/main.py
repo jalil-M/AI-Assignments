@@ -83,17 +83,16 @@ class LinearClassifier:
         
         self.weights = None
         self.norm_coefs = None
-        self.data = None
+        self.X = None
+        self.Y = None
         
         
-    def fit(self, data):
-        self.data = data
-        
-        # Labels list
-        Y = np.array(self.data['labels'])
+    def fit(self, X, Y):
+        self.X = X
+        self.Y = Y
         
         # Values list, with extra 1 to account for the intercept term
-        X = self.normalize(np.array([[1.0] + values for values in self.data['values']]))
+        X = self.normalize(np.array([np.insert(values, 0, 1) for values in X]))
         
         # Number of examples
         n = len(Y)
@@ -108,29 +107,37 @@ class LinearClassifier:
             r = random.randrange(n)
             y, x = Y[r], X[r]
             
+            h = self._classifier(x)
+            
             for i, w in enumerate(self.weights):
-                h = self._classifier(x)
                 w += self.learning_rate(step) * (y - h) * h * (1 - h) * x[i]
-                print(self.learning_rate(step) * (y - h) * h * (1 - h) * x[i])
                 self.weights[i] = w
                 
             # Number of misclassified examples
-            m = sum([abs(true_y - pred_y) for true_y, pred_y in zip(Y, self.predict(X))])
+            m = sum([abs(true_y - pred_y) for true_y, pred_y in zip(Y, self.predict(X[:, 1:]))])
+            
             step += 1
             
     def predict(self, X):
-        return [self._classifier(x) for x in X]
+        return [0 if self._classifier(np.insert(x, 0, 1)) < 0.5 else 1 for x in X]
+    
+    def loss(self, X, Y):
+        s = 0
+        
+        for y, x in zip(Y, X):
+            s += (y - self._classifier(x)) ** 2
+            
+        return s
+        
     
     def normalize(self, values):
         v = values.transpose()
-        norm_coefs = []
+        self.norm_coefs = np.array([])
         
         for i, row in enumerate(v):
             m = max(row)
             v[i] /= m
-            norm_coefs.append(m)
-            
-        self.norm_coefs = norm_coefs
+            self.norm_coefs = np.append(self.norm_coefs, m)
         
         return v.transpose()
                 
@@ -139,6 +146,42 @@ class LinearClassifier:
         
     def _threshold(self, a):
         return 1 / (1 + exp(-a))
+    
+def cross_validate(clf, X, Y, cv=10):
+    n = len(X)
+    scores = []
+    
+    order = np.arange(n)
+    np.random.shuffle(order)
+    
+    for ind in np.array_split(order, cv):
+        test_indices = ind
+        train_indices = np.array([i for i in range(n) if i not in test_indices])
+        
+        X_train = X[train_indices, :]
+        Y_train = Y[train_indices]
+        
+        X_test = X[test_indices, :]
+        Y_test = Y[test_indices]
+        
+        print('Actual value:', Y_test)
+
+        clf.fit(X_train, Y_train)
+        
+        Y_pred = clf.predict(X_test / clf.norm_coefs[1:])
+        
+        print('Prediction:', Y_pred)
+        print('Weights:', clf.weights)
+        print('Prob:', clf._classifier(np.insert(X_test[0] / clf.norm_coefs[1:], 0, 1)))
+        print('##################################################')
+        
+        # Misclassified examples
+        m = sum([abs(true_y - pred_y) for true_y, pred_y in zip(Y_test, Y_pred)])
+        
+        scores.append((1 - m / len(Y_pred)) * 100)
+        
+    return scores
+        
         
 if __name__ == '__main__':
     data = LIBSVMFile('data.libsvm').load_data().data
@@ -147,10 +190,13 @@ if __name__ == '__main__':
     Y = data['labels']
     
     def f(t):
-        return 0.01
+        return 10000/(1000+t)
     
-    clf = LinearClassifier(alpha=f, max_steps=1000, err_crit=0)
-    clf.fit(data)
+    clf = LinearClassifier(alpha=f, max_steps=10000, err_crit=0)
+#    clf.fit(data)
+    scores = cross_validate(clf, np.array(data['values']), np.array(data['labels']), len(Y))
+    print(scores)
+    print(np.mean(scores), '%')
     w = clf.weights
     nc = clf.norm_coefs
     
@@ -160,6 +206,5 @@ if __name__ == '__main__':
     plt.scatter(X1, X2, c=Y)
     plt.plot(Xg, Yg)
     plt.show()
-
     
         
