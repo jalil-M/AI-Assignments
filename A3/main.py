@@ -188,9 +188,9 @@ if __name__ == '__main__':
     clf = LinearClassifier(alpha=f, max_steps=10000, err_crit=2)
 #    clf.fit(data)
     scores = cross_validate(clf, np.array(data['values']), np.array(data['labels']), len(Y))
-    print(scores)
-    print(np.mean(scores), '%')
+    print('Accuracy:', np.mean(scores), '%')
     w = clf.weights
+    print('Weights:', w)
     nc = clf.norm_coefs
     
     Xg = range(10000, 80000)
