@@ -192,7 +192,7 @@ if __name__ == '__main__':
     def f(t):
         return 10000/(1000+t)
     
-    clf = LinearClassifier(alpha=f, max_steps=10000, err_crit=0)
+    clf = LinearClassifier(alpha=f, max_steps=10000, err_crit=2)
 #    clf.fit(data)
     scores = cross_validate(clf, np.array(data['values']), np.array(data['labels']), len(Y))
     print(scores)
