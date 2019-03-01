@@ -163,17 +163,10 @@ def cross_validate(clf, X, Y, cv=10):
         
         X_test = X[test_indices, :]
         Y_test = Y[test_indices]
-        
-        print('Actual value:', Y_test)
 
         clf.fit(X_train, Y_train)
         
         Y_pred = clf.predict(X_test / clf.norm_coefs[1:])
-        
-        print('Prediction:', Y_pred)
-        print('Weights:', clf.weights)
-        print('Prob:', clf._classifier(np.insert(X_test[0] / clf.norm_coefs[1:], 0, 1)))
-        print('##################################################')
         
         # Misclassified examples
         m = sum([abs(true_y - pred_y) for true_y, pred_y in zip(Y_test, Y_pred)])
