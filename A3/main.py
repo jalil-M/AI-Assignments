@@ -7,9 +7,10 @@ Created on Mon Feb 25 23:39:31 2019
 
 import random
 import matplotlib.pyplot as plt
-from math import exp
+from math import exp, log
 import numpy as np
 
+inf = float('inf')
 
 class LIBSVMFile:
     
@@ -70,7 +71,7 @@ class LIBSVMFile:
         
 class LinearClassifier:
     
-    def __init__(self, alpha=1, max_steps=1000, err_crit=2):
+    def __init__(self, alpha=1, max_steps=1000, eps=0.01):
         if callable(alpha):
             # If alpha is a function
             self.learning_rate = alpha
@@ -78,8 +79,7 @@ class LinearClassifier:
             # Otherwise a constant function is created
             self.learning_rate = lambda t: alpha
         self.max_steps = max_steps  # Maximum number of iterations before stopping
-        self.err_crit = err_crit    # Error threshold: when the number of misclassified
-                                    # examples passes below, the training stops
+        self.eps = eps  # Epsilon stop criterion
         
         self.weights = None
         self.norm_coefs = None
@@ -101,20 +101,18 @@ class LinearClassifier:
         self.weights = [1] * len(X[0])
         
         step = 0
-        m = n
         
-        while step < self.max_steps and m > self.err_crit:
+        grad = [inf] * n
+        
+        while step < self.max_steps and np.linalg.norm(grad, 2) > self.eps:
             r = random.randrange(n)
             y, x = Y[r], X[r]
             
-            h = self._classifier(x)
-            
-            for i, w in enumerate(self.weights):
-                w += self.learning_rate(step) * (y - h) * h * (1 - h) * x[i]
-                self.weights[i] = w
+            grad = self._update_weights(x, y, step)
+            print(grad)
                 
             # Number of misclassified examples
-            m = sum([abs(true_y - pred_y) for true_y, pred_y in zip(Y, self.predict(X[:, 1:]))])
+            # m = sum([abs(true_y - pred_y) for true_y, pred_y in zip(Y, self.predict(X[:, 1:]))])
             
             step += 1
             
@@ -143,7 +141,61 @@ class LinearClassifier:
                 
     def _classifier(self, x):
         return self._threshold(np.dot(self.weights, x))
+    
+    def _update_weights(self, x, y, step):
+        h = self._classifier(x)
         
+        # Gradient vector
+        grad = []
+        
+        for i, w in enumerate(self.weights):
+            g = (y - h) * x[i]
+            
+            w += self.learning_rate(step) * g
+            self.weights[i] = w
+            
+            grad.append(g)
+            
+        return grad
+        
+    def _threshold(self, a):        
+        if a >= 0:
+            return 1
+        else:
+            return 0
+    
+class LinearClassifierLogReg(LinearClassifier):
+    
+    def __init__(self, alpha, max_steps=1000, eps=0.01):
+        super().__init__(self, alpha, max_steps, 0)
+        
+    def loss(self, X, Y):
+        # Logistic loss
+        
+        s = 0
+        
+        for y, x, in zip(Y, X):
+            h = self._classifier(x)
+            s += y * log(h) + (1 - y) * log(1 - h)
+            
+        return s
+    
+    def _update_weights(self, x, y, step):
+        h = self._classifier(x)
+        
+        # Gradient vector
+        grad = []
+        
+        for i, w in enumerate(self.weights):
+            g = (y - h) * h * (1 - h) * x[i]
+            
+            w += self.learning_rate(step) * g
+            self.weights[i] = w
+            
+            grad.append(g)
+            
+        return grad
+            
     def _threshold(self, a):
         return 1 / (1 + exp(-a))
     
@@ -171,7 +223,7 @@ def cross_validate(clf, X, Y, cv=10):
         # Misclassified examples
         m = sum([abs(true_y - pred_y) for true_y, pred_y in zip(Y_test, Y_pred)])
         
-        scores.append((1 - m / len(Y_pred)) * 100)
+        scores.append((1 - m / len(Y_pred)))
         
     return scores
         
@@ -185,10 +237,10 @@ if __name__ == '__main__':
     def f(t):
         return 10000/(1000+t)
     
-    clf = LinearClassifier(alpha=f, max_steps=10000, err_crit=2)
+    clf = LinearClassifier(alpha=f, max_steps=10000, eps=1e-6)
 #    clf.fit(data)
     scores = cross_validate(clf, np.array(data['values']), np.array(data['labels']), len(Y))
-    print('Accuracy:', np.mean(scores), '%')
+    print('Scores:', scores)
     w = clf.weights
     print('Weights:', w)
     nc = clf.norm_coefs
