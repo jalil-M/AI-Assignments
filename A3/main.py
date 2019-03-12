@@ -264,27 +264,27 @@ if __name__ == '__main__':
         return 10000/(1000+t)
     
     def f2(t):
-        return 1/(1000*(1+t))
+        return 10000/(10*(100+t))
     
     clf1 = LinearClassifier(alpha=f1, max_steps=10000, err_crit=0)
-    clf2 = LinearClassifierLogReg(alpha=f1, max_steps=20000, eps=0.0001)
+    clf2 = LinearClassifierLogReg(alpha=f2, max_steps=20000, eps=0.0001)
     
-    clf1.fit(data['values'], Y)
-    clf2.fit(data['values'], Y)
+#    clf1.fit(data['values'], Y)
+#    clf2.fit(data['values'], Y)
     
-#    scores1 = cross_validate(clf1, np.array(data['values']), np.array(data['labels']), len(Y))
-#    scores2 = cross_validate(clf2, np.array(data['values']), np.array(data['labels']), len(Y))
+    scores1 = cross_validate(clf1, np.array(data['values']), np.array(data['labels']), len(Y))
+    scores2 = cross_validate(clf2, np.array(data['values']), np.array(data['labels']), len(Y))
     
-#    print('Scores for perceptron:', scores1)
+    print('Scores for perceptron:', scores1)
     w1 = clf1.weights
     print('Weights for perceptron:', w1)
     nc1 = clf1.norm_coefs
     
     print('\n')
     
-#    print('Scores for linear regression:', scores2)
+    print('Scores for logistic regression:', scores2)
     w2 = clf2.weights
-    print('Weights for linear regression:', w2)
+    print('Weights for logistic regression:', w2)
     nc2 = clf2.norm_coefs
     
     
