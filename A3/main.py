@@ -71,7 +71,7 @@ class LIBSVMFile:
         
 class LinearClassifier:
     
-    def __init__(self, alpha=1, max_steps=1000, eps=0.01):
+    def __init__(self, alpha=1, max_steps=1000, err_crit=0):
         if callable(alpha):
             # If alpha is a function
             self.learning_rate = alpha
@@ -79,7 +79,7 @@ class LinearClassifier:
             # Otherwise a constant function is created
             self.learning_rate = lambda t: alpha
         self.max_steps = max_steps  # Maximum number of iterations before stopping
-        self.eps = eps  # Epsilon stop criterion
+        self.err_crit = err_crit
         
         self.weights = None
         self.norm_coefs = None
@@ -101,18 +101,16 @@ class LinearClassifier:
         self.weights = [1] * len(X[0])
         
         step = 0
+        m = n
         
-        grad = [inf] * n
-        
-        while step < self.max_steps and np.linalg.norm(grad, 2) > self.eps:
+        while step < self.max_steps and m > self.err_crit:
             r = random.randrange(n)
             y, x = Y[r], X[r]
-            
-            grad = self._update_weights(x, y, step)
-            print(grad)
                 
+            self._update_weights(x, y, step)
+            
             # Number of misclassified examples
-            # m = sum([abs(true_y - pred_y) for true_y, pred_y in zip(Y, self.predict(X[:, 1:]))])
+            m = sum([abs(true_y - pred_y) for true_y, pred_y in zip(Y, self.predict(X[:, 1:]))])
             
             step += 1
             
@@ -127,7 +125,6 @@ class LinearClassifier:
             
         return s
         
-    
     def normalize(self, values):
         v = values.transpose()
         self.norm_coefs = np.array([])
@@ -164,10 +161,12 @@ class LinearClassifier:
         else:
             return 0
     
+    
 class LinearClassifierLogReg(LinearClassifier):
     
     def __init__(self, alpha, max_steps=1000, eps=0.01):
-        super().__init__(self, alpha, max_steps, 0)
+        super().__init__(alpha, max_steps, 0)
+        self.eps = eps
         
     def loss(self, X, Y):
         # Logistic loss
@@ -179,6 +178,35 @@ class LinearClassifierLogReg(LinearClassifier):
             s += y * log(h) + (1 - y) * log(1 - h)
             
         return s
+    
+    def fit(self, X, Y):
+        self.X = X
+        self.Y = Y
+        
+        # Values list, with extra 1 to account for the intercept term
+        X = self.normalize(np.array([np.insert(values, 0, 1) for values in X]))
+        
+        # Number of examples
+        n = len(Y)
+        
+        # Initialization at 1
+        self.weights = [1] * len(X[0])
+        
+        step = 0
+        grad = [inf] * n
+        
+        while step < self.max_steps:
+            print(step)
+            if np.linalg.norm(grad, 2) < self.eps:
+                break
+            
+            r = random.randrange(n)
+            y, x = Y[r], X[r]
+                
+            grad = self._update_weights(x, y, step)
+            print(grad)
+            
+            step += 1
     
     def _update_weights(self, x, y, step):
         h = self._classifier(x)
@@ -234,22 +262,41 @@ if __name__ == '__main__':
     X2 = [e[1] for e in data['values']]
     Y = data['labels']
     
-    def f(t):
+    def f1(t):
         return 10000/(1000+t)
     
-    clf = LinearClassifier(alpha=f, max_steps=10000, eps=1e-6)
-#    clf.fit(data)
-    scores = cross_validate(clf, np.array(data['values']), np.array(data['labels']), len(Y))
-    print('Scores:', scores)
-    w = clf.weights
-    print('Weights:', w)
-    nc = clf.norm_coefs
+    def f2(t):
+        return 1/(1000*(1+t))
+    
+    clf1 = LinearClassifier(alpha=f1, max_steps=10000, err_crit=0)
+    clf2 = LinearClassifierLogReg(alpha=f1, max_steps=10000, eps=0.0001)
+    
+    clf1.fit(data['values'], Y)
+    clf2.fit(data['values'], Y)
+    
+#    scores1 = cross_validate(clf1, np.array(data['values']), np.array(data['labels']), len(Y))
+#    scores2 = cross_validate(clf2, np.array(data['values']), np.array(data['labels']), len(Y))
+    
+#    print('Scores for perceptron:', scores1)
+    w1 = clf1.weights
+    print('Weights for perceptron:', w1)
+    nc1 = clf1.norm_coefs
+    
+    print('\n')
+    
+#    print('Scores for linear regression:', scores2)
+    w2 = clf2.weights
+    print('Weights for linear regression:', w2)
+    nc2 = clf2.norm_coefs
+    
     
     Xg = range(10000, 80000)
-    Yg = [-nc[2] * (w[0] + w[1] / nc[1] * x) / w[2] for x in Xg]
+    Yg1 = [-nc1[2] * (w1[0] + w1[1] / nc1[1] * x) / w1[2] for x in Xg]
+    Yg2 = [-nc2[2] * (w2[0] + w2[1] / nc2[1] * x) / w2[2] for x in Xg]
     
     plt.scatter(X1, X2, c=Y)
-    plt.plot(Xg, Yg)
+    plt.plot(Xg, Yg1)
+    plt.plot(Xg, Yg2)
     plt.show()
     
         
