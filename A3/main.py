@@ -196,7 +196,6 @@ class LinearClassifierLogReg(LinearClassifier):
         grad = [inf] * n
         
         while step < self.max_steps:
-            print(step)
             if np.linalg.norm(grad, 2) < self.eps:
                 break
             
@@ -204,7 +203,6 @@ class LinearClassifierLogReg(LinearClassifier):
             y, x = Y[r], X[r]
                 
             grad = self._update_weights(x, y, step)
-            print(grad)
             
             step += 1
     
