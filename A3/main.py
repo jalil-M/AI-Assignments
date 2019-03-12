@@ -267,7 +267,7 @@ if __name__ == '__main__':
         return 1/(1000*(1+t))
     
     clf1 = LinearClassifier(alpha=f1, max_steps=10000, err_crit=0)
-    clf2 = LinearClassifierLogReg(alpha=f1, max_steps=10000, eps=0.0001)
+    clf2 = LinearClassifierLogReg(alpha=f1, max_steps=20000, eps=0.0001)
     
     clf1.fit(data['values'], Y)
     clf2.fit(data['values'], Y)
@@ -293,8 +293,9 @@ if __name__ == '__main__':
     Yg2 = [-nc2[2] * (w2[0] + w2[1] / nc2[1] * x) / w2[2] for x in Xg]
     
     plt.scatter(X1, X2, c=Y)
-    plt.plot(Xg, Yg1)
-    plt.plot(Xg, Yg2)
+    plt.plot(Xg, Yg1, label='Linear classifier')
+    plt.plot(Xg, Yg2, label='Logistic regression')
+    plt.legend()
     plt.show()
     
         
