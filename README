@@ -1,11 +1,11 @@
-## AI Assignemnts
+### AI Assignemnts ###
 
 This repository represents assignments done in class during the course "Applied Artificial Intelligence" with Prof. Jacek Malec.
 Hence, you will find the topics below :
 
-Assignment 1 = Othello Project 
-Assignment 2 = Probabilistic Reasoning over time 
-Assignment 3 = Machine Learning
+    A1. Othello Project : Implement a full reversi game
+    A2. Probabilistic Reasoning over time : work with robot localisation based on forward filtering with a Hidden Markov Model.
+    A3. Machine Learning : use of the gradient descent to implement the linear regression and perceptron algorithms.
 
 *Useful Links:*
 
