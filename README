@@ -1,20 +1,15 @@
-Special Informations:
+## AI Assignemnts
 
-Assignment 1 = Othello Project ( Deadline on 15/02 )
-Assignment 2 = Probabilistic Reasoning over time ( Deadline on 22/02)
-Assignment 3 = Machine Learning (Deadline on 01/03)
+This repository represents assignments done in class during the course "Applied Artificial Intelligence" with Prof. Jacek Malec.
+Hence, you will find the topics below :
 
-Links :
+Assignment 1 = Othello Project 
+Assignment 2 = Probabilistic Reasoning over time 
+Assignment 3 = Machine Learning
 
-http://code.activestate.com/recipes/580698-reversi-othello/
-http://dhconnelly.com/paip-python/docs/paip/othello.html#minimax
-https://github.com/johnafish/othello
+*Useful Links:*
 
-https://github.com/nickbirnberg/HMM-localisation
-https://sandipanweb.wordpress.com/2016/11/12/robot-localization-with-hmm-as-probabilistic-graphical-model/
 https://www.cs.ubc.ca/~carenini/TEACHING/CPSC322-10/SLIDES/lecture32-2010.pdf
-https://www.youtube.com/watch?v=Nc9-iLy_rgY
-
-https://machinelearningmastery.com/evaluate-performance-machine-learning-algorithms-python-using-resampling/¨
+https://machinelearningmastery.com/evaluate-performance-machine-learning-algorithms-python-using-resampling/Â¨
 https://scikit-learn.org/stable/modules/cross_validation.html
 
